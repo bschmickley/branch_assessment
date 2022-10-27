@@ -10,6 +10,7 @@ import com.schmix.branch.exceptions.ResourceNotFoundException;
 import com.schmix.branch.models.github.UserData;
 import com.schmix.branch.models.github.UserRepo;
 import com.schmix.branch.services.HttpService;
+import com.schmix.branch.utils.Urls;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class GithubService {
-    private static final String USER_URL = "https://api.github.com/users/%s";
-    private static final String USER_REPOS_URL = "https://api.github.com/users/%s/repos";
-
     private HttpService httpService;
     private final Logger logger;
     private final ObjectMapper mapper;
@@ -56,7 +54,7 @@ public class GithubService {
         }
 
         data = fetchUserDataByUsername(username);
-        data.setRepos(fetchUserRepos(username));
+        data.setRepos(fetchUserReposByUsername(username));
 
         cache.put(username, data);
 
@@ -64,7 +62,7 @@ public class GithubService {
     }
 
     private UserData fetchUserDataByUsername(String username) {
-        String body = httpService.get(String.format(USER_URL, username));
+        String body = httpService.get(Urls.getUserUrl(username));
         if (null == body) {
             throw new ResourceNotFoundException(String.format("Unable to find data for user %s", username));
         }
@@ -77,10 +75,10 @@ public class GithubService {
         }
     }
 
-    private UserRepo[] fetchUserRepos(String username) {
-        String repoBody = httpService.get(String.format(USER_REPOS_URL, username));
+    private UserRepo[] fetchUserReposByUsername(String username) {
+        String repoBody = httpService.get(Urls.getUserReposUrl(username));
         if (null == repoBody) {
-            logger.info(String.format("Repo request for %s returned NULL"));
+            logger.info(String.format("Repo request for %s returned NULL", username));
         } else {
             try {
                 return mapper.readValue(repoBody, UserRepo[].class);

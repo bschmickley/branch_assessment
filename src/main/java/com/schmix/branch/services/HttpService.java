@@ -18,7 +18,11 @@ public class HttpService {
     private final Logger logger;
 
     public HttpService() {
-        client = HttpClient.newHttpClient();
+        this(HttpClient.newHttpClient());
+    }
+
+    public HttpService(HttpClient client) {
+        this.client = client;
         logger = LoggerFactory.getLogger(HttpService.class);
     }
 
