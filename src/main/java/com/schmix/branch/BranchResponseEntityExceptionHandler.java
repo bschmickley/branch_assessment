@@ -19,7 +19,7 @@ public class BranchResponseEntityExceptionHandler extends ResponseEntityExceptio
     private static final Map<Class, HttpStatus> EXCEPTIONS_MAP = Map.ofEntries(
             Map.entry(IllegalArgumentException.class, HttpStatus.BAD_REQUEST),
             Map.entry(ResourceNotFoundException.class, HttpStatus.NOT_FOUND),
-            Map.entry(BadUpstreamResponseException.class, HttpStatus.BAD_GATEWAY)
+            Map.entry(BadUpstreamResponseException.class, HttpStatus.UNPROCESSABLE_ENTITY)
     );
 
     private ObjectMapper mapper = new ObjectMapper();

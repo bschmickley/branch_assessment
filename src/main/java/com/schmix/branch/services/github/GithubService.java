@@ -3,12 +3,11 @@ package com.schmix.branch.services.github;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.schmix.branch.exceptions.BadUpstreamResponseException;
 import com.schmix.branch.exceptions.ResourceNotFoundException;
 import com.schmix.branch.models.github.UserData;
 import com.schmix.branch.models.github.UserRepo;
+import com.schmix.branch.repository.github.UserDataRepository;
 import com.schmix.branch.services.HttpService;
 import com.schmix.branch.utils.Urls;
 import org.slf4j.Logger;
@@ -16,23 +15,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.TimeUnit;
-
 @Service
 public class GithubService {
-    private HttpService httpService;
+    private final HttpService httpService;
+    private final UserDataRepository userDataRepository;
     private final Logger logger;
     private final ObjectMapper mapper;
-    private final Cache<String, UserData> cache;
 
     @Autowired
-    public GithubService(HttpService httpService) {
+    public GithubService(HttpService httpService, UserDataRepository userDataRepository) {
         this.httpService = httpService;
+        this.userDataRepository = userDataRepository;
 
-        cache = CacheBuilder.newBuilder()
-                .maximumSize(100)
-                .expireAfterWrite(15, TimeUnit.MINUTES)
-                .build();
         logger = LoggerFactory.getLogger(GithubService.class);
         mapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -47,7 +41,7 @@ public class GithubService {
     }
 
     private UserData getUserDataByUsername(String username) {
-        UserData data = cache.getIfPresent(username);
+        UserData data = userDataRepository.get(username);
         if (null != data) {
             logger.info(String.format("Retrieved data for %s from cache", username));
             return data;
@@ -56,7 +50,7 @@ public class GithubService {
         data = fetchUserDataByUsername(username);
         data.setRepos(fetchUserReposByUsername(username));
 
-        cache.put(username, data);
+        userDataRepository.save(username, data);
 
         return data;
     }
